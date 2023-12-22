@@ -1,718 +1,1268 @@
----
-swagger: "2.0"
+openapi: 3.0.1
 info:
-  description: "This is a sample server Petstore server.  You can find out more about\
-    \ Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).\
-    \  For this sample, you can use the api key `special-key` to test the authorization\
-    \ filters."
-  version: "1.0.5"
-  title: "Swagger Petstore"
-  termsOfService: "http://swagger.io/terms/"
-  contact:
-    email: "apiteam@swagger.io"
-  license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "petstore.swagger.io"
-basePath: "/v2"
-tags:
-- name: "pet"
-  description: "Everything about your Pets"
-  externalDocs:
-    description: "Find out more"
-    url: "http://swagger.io"
-- name: "store"
-  description: "Access to Petstore orders"
-- name: "user"
-  description: "Operations about user"
-  externalDocs:
-    description: "Find out more about our store"
-    url: "http://swagger.io"
-schemes:
-- "https"
-- "http"
+  title: API
+  description: 'This is the Swagger Explorer for the StorTrack DataStream. This provides seamless access to the DataStream product and enables you to integrate easily with your application.<br /><br />This API Explorer lists the available communication methods and also provides a way to directly test these methods. The user can go through every stage, starting with authentication through fetching the response and all intermediate stages passing actual parameters and fetching a response identical to the live environment.<br><br><h2><strong>Authorization</strong></h2><br>Every request sent to this API must be authorized with a corresponding access token. Access token must be transmitted in request Authorization header, and its value must come after the token type (Bearer) and a space.<br>For example, if ''A90324XXZUZUgpO0dd6npHcM83CJ...'' is your access token, every request must contain this header:<br><br><pre>&nbsp;&nbsp;&nbsp;Authorization: Bearer A90324XXZUZUgpO0dd6npHcM83CJ...</pre><p><b>Authorizing requests on this page</b><br><br>Authorization header is automatically injected to requests made from this page. Just copy access token from the authtoken method and paste your accesstoken in the text box on the right-hand side of the top bar and you are good to go.'
+  version: standard_v3
+servers:
+  - url: https://api.stortrack.com
 paths:
-  /pet/{petId}/uploadImage:
+  /authtoken:
     post:
       tags:
-      - "pet"
-      summary: "uploads an image"
-      description: ""
-      operationId: "uploadFile"
-      consumes:
-      - "multipart/form-data"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to update"
+        - Authentication
+      description: 'This method receives your user name & password and returns an access token, token type & expiration in seconds.<br><br>Use the access credentials provided to you. The grant_type defaults to ''password''<br><br><b>Example:</b><br/><br><pre>&#123;<br />&nbsp;&nbsp;grant_type&#58; &ldquo;password&rdquo;,<br />&nbsp;&nbsp;username: &#58; &ldquo;abc@abc.com&rdquo;,<br />&nbsp;&nbsp;password&#58; &ldquo;Edfs68G0oada&rdquo;<br />&#125;'
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+                - grant_type
+                - password
+                - username
+              properties:
+                grant_type:
+                  type: string
+                  default: password
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
         required: true
-        type: "integer"
-        format: "int64"
-      - name: "additionalMetadata"
-        in: "formData"
-        description: "Additional data to pass to server"
-        required: false
-        type: "string"
-      - name: "file"
-        in: "formData"
-        description: "file to upload"
-        required: false
-        type: "file"
       responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet:
+        '200':
+          description: On success response will be received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/accessresponse'
+  /storesbyaddress:
     post:
       tags:
-      - "pet"
-      summary: "Add a new pet to the store"
-      description: ""
-      operationId: "addPet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
+        - Search
+      description: 'This method enables you to search for Store Locations in the Database. It receives Country, State, City, Zip. Country is a mandatory field to search.. <br /><br />This method will return complete Store information of all locations that match the search criteria.<br /><br /><b>Note: </b>Enter the full name in the Country field(example: "United States").'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/addresssearch'
+        required: false
       responses:
-        405:
-          description: "Invalid input"
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/searchresponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
       security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-    put:
-      tags:
-      - "pet"
-      summary: "Update an existing pet"
-      description: ""
-      operationId: "updatePet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-        405:
-          description: "Validation exception"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByStatus:
-    get:
-      tags:
-      - "pet"
-      summary: "Finds Pets by status"
-      description: "Multiple status values can be provided with comma separated strings"
-      operationId: "findPetsByStatus"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "status"
-        in: "query"
-        description: "Status values that need to be considered for filter"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-          enum:
-          - "available"
-          - "pending"
-          - "sold"
-          default: "available"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid status value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByTags:
-    get:
-      tags:
-      - "pet"
-      summary: "Finds Pets by tags"
-      description: "Multiple tags can be provided with comma separated strings. Use\
-        \ tag1, tag2, tag3 for testing."
-      operationId: "findPetsByTags"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "tags"
-        in: "query"
-        description: "Tags to filter by"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid tag value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-      deprecated: true
-  /pet/{petId}:
-    get:
-      tags:
-      - "pet"
-      summary: "Find pet by ID"
-      description: "Returns a single pet"
-      operationId: "getPetById"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to return"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - api_key: []
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+  /storesbygeocode:
     post:
       tags:
-      - "pet"
-      summary: "Updates a pet in the store with form data"
-      description: ""
-      operationId: "updatePetWithForm"
-      consumes:
-      - "application/x-www-form-urlencoded"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet that needs to be updated"
-        required: true
-        type: "integer"
-        format: "int64"
-      - name: "name"
-        in: "formData"
-        description: "Updated name of the pet"
+        - Search
+      description: This method enables you to search for Store Locations in the Database. It receives Geo co-ordinates with Radius of coverage (in miles). All these fields are mandatory.<br /><br />This method will return complete Store information of all locations that match the search criteria.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/geocodesearch'
         required: false
-        type: "string"
-      - name: "status"
-        in: "formData"
-        description: "Updated status of the pet"
-        required: false
-        type: "string"
       responses:
-        405:
-          description: "Invalid input"
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/searchresponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
       security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-    delete:
-      tags:
-      - "pet"
-      summary: "Deletes a pet"
-      description: ""
-      operationId: "deletePet"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "api_key"
-        in: "header"
-        required: false
-        type: "string"
-      - name: "petId"
-        in: "path"
-        description: "Pet id to delete"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /store/order:
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+  /storeinfo:
     post:
       tags:
-      - "store"
-      summary: "Place an order for a pet"
-      description: ""
-      operationId: "placeOrder"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "order placed for purchasing the pet"
-        required: true
-        schema:
-          $ref: "#/definitions/Order"
+        - Store
+      description: This method receives the store id obtained in the previous method and returns complete Store & Unit Information for that store.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/storeinforequest'
+        required: false
       responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid Order"
-  /store/order/{orderId}:
-    get:
-      tags:
-      - "store"
-      summary: "Find purchase order by ID"
-      description: "For valid response try integer IDs with value >= 1 and <= 10.\
-        \ Other values will generated exceptions"
-      operationId: "getOrderById"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of pet that needs to be fetched"
-        required: true
-        type: "integer"
-        maximum: 10
-        minimum: 1
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
-    delete:
-      tags:
-      - "store"
-      summary: "Delete purchase order by ID"
-      description: "For valid response try integer IDs with positive integer value.\
-        \ Negative or non-integer values will generate API errors"
-      operationId: "deleteOrder"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of the order that needs to be deleted"
-        required: true
-        type: "integer"
-        minimum: 1
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
-  /store/inventory:
-    get:
-      tags:
-      - "store"
-      summary: "Returns pet inventories by status"
-      description: "Returns a map of status codes to quantities"
-      operationId: "getInventory"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "object"
-            additionalProperties:
-              type: "integer"
-              format: "int32"
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/storeinforesponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/storeinforesponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/systemerror'
       security:
-      - api_key: []
-  /user/createWithArray:
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+  /findcompetitors:
     post:
       tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithArrayInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
+        - Search
+      description: This method enables you to find competitors for a Subject Store that are located with in a defined coverage zone (radius in miles) around this Store.<br /><br />This method returns Subject Store information & the competitor store(s) information.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/competitorrequest'
         required: true
-        schema:
-          type: "array"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/competitorresponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/competitorresponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+      security:
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+  /optimize/marketsbyuser:
+    post:
+      tags:
+        - Search
+      description: This method enables you to search for markets setup in your Optimize account. It receives your Optimize account's username as a mandatory field. This method will return details on all the markets setup in the Optimize dashboard and the competitor stores list within the proximity.<br/><br/>For the competitor stores, the "istracked" data translate to the values listed below. 0 = Competitor not tracked 1 = Competitor tracked <br /><br /><i>For authorized users only, contact sales for further information.</i>
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/optimizerequest'
+        required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/markets'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+      security:
+        - oauth2:
+            - read
+            - write
+      x-codegen-request-body-name: body
+  /competitorprice:
+    post:
+      tags:
+        - Store Price
+      description: 'This method retrives unit price.<br /><br />It receives list of Store ID(s) or Master ID(s) with Coverage zone (in miles). Alternately, you can pass a specific list of competitor store ids or competitor master ids for each subject store. Units attribute filters are not mandatory and if none are provided all available unit prices will be returned.<br><br>Unit attribute filters allow you to search for specific type of units. The attributes you can filter on are  width, length, height, climatecontrolled, humiditycontrolled, outdooraccess, alarm, power, covered, driveup, elevator, car, rv, boat, othervehicle, doortype & floor. <br><br>All attributes except width, length & Height accept only -1, 0 & 1 as valid input. These translate to the values listed below. <br>-1 = Unknown<br>0  = No<br>1 = Yes<br><br><b>Examples:</b><br><br />If you need pricing for all available units in the Subject store 547 and competitors within 3 miles radius<br><br><pre>{<br>&nbsp;&nbsp;stores: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;storeid: 547,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coveragezone: 3<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;],<br>&nbsp;&nbsp;units: []<br>}</pre><br>(or)<br><pre>{<br>&nbsp;&nbsp;stores: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;masterid: 547,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coveragezone: 3<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;],<br>&nbsp;&nbsp;units: []<br>}</pre><br><br>If you need pricing for all available units in the Subject store with masterid 547 and specified competitor store <br><br><pre>{<br>&nbsp;&nbsp;stores: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;storeid: 547,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;competitorstores: [556, 557, 568]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;],<br>&nbsp;&nbsp;units: []<br>}</pre><br>(or)<pre>{<br>&nbsp;&nbsp;stores: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;masterid: 547,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;competitormasterids: [556, 557, 568]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;],<br>&nbsp;&nbsp;units: []<br>}</pre><br><br><br />If you need pricing for all ''5 x 5'' & ''5 x 10'' with climatecontrolled units in the Subject store 547 and competitors within 5 miles radius<br><br><pre>{<br>&nbsp;&nbsp;stores: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;storeid: 547,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coveragezone: 5<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;],<br>&nbsp;&nbsp;units: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;width: 5,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length: 5<br>&nbsp;&nbsp;&nbsp;&nbsp;},<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;width: 5, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length: 10, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;climatecontrolled: 1<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;]<br>}</pre><br />If you need pricing for all Parking units in the Subject store 547 and competitors within 5 miles radius<br><br><pre>{<br>&nbsp;&nbsp;stores: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;storeid: 547,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coveragezone: 5<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;],<br>&nbsp;&nbsp;units: [<br>&nbsp;&nbsp;&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;spacetype: &ldquo;Parking&rdquo;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;]<br>}</pre>'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/pricerequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/storepriceresponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/storepriceresponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+      security:
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+  /unitprice:
+    post:
+      tags:
+        - Store Price
+      description: 'This method retrives unit price. It receives list of Store ID(s) and filter if required.<br><br>Unit attribute filters allow you to search for specific type of units. The attributes you can filter on are  width, length, height, climatecontrolled, humiditycontrolled, outdooraccess, alarm, power, covered, driveup, elevator, car, rv, boat, othervehicle, doortype & floor. <br><br>All attributes except width, length & Height accept only -1, 0 & 1 as valid input. These translate to the values listed below. <br>-1 = Unknown<br>0  = No<br>1 = Yes<br><br><b>Examples:</b><br> <br />If you need price for size 5 x 5 & climatedcontrolled units for the stores 547 and 556</b><pre>&#123;<br />&nbsp;&nbsp;storeids&#58; [547, 556],<br />&nbsp;&nbsp;filter: {<br>&nbsp;&nbsp;&nbsp;&nbsp;width: 5,<br>&nbsp;&nbsp;&nbsp;&nbsp;length: 5,<br>&nbsp;&nbsp;&nbsp;&nbsp;climatecontrolled: 1 <br/>&nbsp;&nbsp;}<br />&#125;</pre><br><br>If you need all the available units without any filters<br><br><pre>{<br>&nbsp;&nbsp;storeids: [547, 556],<br>&nbsp;&nbsp;filter: null<br>}</pre><br/>If you need pricing for all units from stores 547 and 556 and filter by spacetype Parking<br><br><pre>{<br>&nbsp;&nbsp;storeids: [547, 556],<br>&nbsp;&nbsp;filter: {<br>&nbsp;&nbsp;&nbsp;&nbsp;spacetype: &ldquo;Parking&rdquo; <br/>&nbsp;&nbsp;}<br />}</pre>'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/unitpricerequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/unitpriceresponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+      security:
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+  /historicaldata:
+    post:
+      tags:
+        - Historical Data
+      description: The Historical Data API grants access to data based on StoreId or MaterId, along with additional details. Initially providing historical data for the current or designated year, it includes store specifics, available historical days, and a list of accessible years. Upgraded to accommodate specific date ranges, the API permits data retrieval within a one-year span through defined start and end dates, allowing multiple calls with different ranges. This empowers users to extract necessary insights for a particular year or analyze data within a focused timeframe.<br /><br /><i>A separate Historical Rate Data API subscription is required and additional fees apply. Please contact our sales team for details.</i>
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/historicaldatarequest'
+        required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/historicaldataresponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/systemerror'
+      security:
+        - oauth2:
+            - read
+      x-codegen-request-body-name: request
+components:
+  schemas:
+    accessresponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+    store:
+      type: object
+      properties:
+        storeid:
+          type: integer
+        storename:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+    addresssearch:
+      required:
+        - country
+      type: object
+      properties:
+        country:
+          type: string
+          default: united states
+        storename:
+          type: string
+          default: ''
+        companyname:
+          type: string
+          default: ''
+        state:
+          type: string
+          default: ''
+        city:
+          type: string
+          default: ''
+        zip:
+          type: string
+          default: ''
+    geocodesearch:
+      required:
+        - lat
+        - lng
+        - radius
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+        radius:
+          type: number
+          format: double
+      example:
+        lat: 28.642863
+        lng: -81.457264
+        radius: 1
+    unitpricerequest:
+      required:
+        - storeids
+      type: object
+      properties:
+        storeids:
+          type: array
+          example:
+            - 547
           items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/createWithList:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithListInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
-        required: true
-        schema:
-          type: "array"
+            type: integer
+        masterids:
+          type: array
+          example:
+            - 300551
           items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/{username}:
-    get:
-      tags:
-      - "user"
-      summary: "Get user by user name"
-      description: ""
-      operationId: "getUserByName"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be fetched. Use user1 for testing. "
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/User"
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-    put:
-      tags:
-      - "user"
-      summary: "Updated user"
-      description: "This can only be done by the logged in user."
-      operationId: "updateUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "name that need to be updated"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Updated user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
-      responses:
-        400:
-          description: "Invalid user supplied"
-        404:
-          description: "User not found"
-    delete:
-      tags:
-      - "user"
-      summary: "Delete user"
-      description: "This can only be done by the logged in user."
-      operationId: "deleteUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be deleted"
-        required: true
-        type: "string"
-      responses:
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-  /user/login:
-    get:
-      tags:
-      - "user"
-      summary: "Logs user into the system"
-      description: ""
-      operationId: "loginUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "query"
-        description: "The user name for login"
-        required: true
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "The password for login in clear text"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          headers:
-            X-Expires-After:
-              type: "string"
-              format: "date-time"
-              description: "date in UTC when token expires"
-            X-Rate-Limit:
-              type: "integer"
-              format: "int32"
-              description: "calls per hour allowed by the user"
-          schema:
-            type: "string"
-        400:
-          description: "Invalid username/password supplied"
-  /user/logout:
-    get:
-      tags:
-      - "user"
-      summary: "Logs out current logged in user session"
-      description: ""
-      operationId: "logoutUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters: []
-      responses:
-        default:
-          description: "successful operation"
-  /user:
-    post:
-      tags:
-      - "user"
-      summary: "Create user"
-      description: "This can only be done by the logged in user."
-      operationId: "createUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Created user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-securityDefinitions:
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
-  petstore_auth:
-    type: "oauth2"
-    authorizationUrl: "https://petstore.swagger.io/oauth/authorize"
-    flow: "implicit"
-    scopes:
-      read:pets: "read your pets"
-      write:pets: "modify pets in your account"
-definitions:
-  ApiResponse:
-    type: "object"
-    properties:
-      code:
-        type: "integer"
-        format: "int32"
-      type:
-        type: "string"
-      message:
-        type: "string"
-  Category:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Category"
-  Pet:
-    type: "object"
-    required:
-    - "name"
-    - "photoUrls"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      category:
-        $ref: "#/definitions/Category"
-      name:
-        type: "string"
-        example: "doggie"
-      photoUrls:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          type: "string"
-          xml:
-            name: "photoUrl"
-      tags:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          xml:
-            name: "tag"
-          $ref: "#/definitions/Tag"
-      status:
-        type: "string"
-        description: "pet status in the store"
-        enum:
-        - "available"
-        - "pending"
-        - "sold"
-    xml:
-      name: "Pet"
-  Tag:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Tag"
-  Order:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      petId:
-        type: "integer"
-        format: "int64"
-      quantity:
-        type: "integer"
-        format: "int32"
-      shipDate:
-        type: "string"
-        format: "date-time"
-      status:
-        type: "string"
-        description: "Order Status"
-        enum:
-        - "placed"
-        - "approved"
-        - "delivered"
-      complete:
-        type: "boolean"
-    xml:
-      name: "Order"
-  User:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      username:
-        type: "string"
-      firstName:
-        type: "string"
-      lastName:
-        type: "string"
-      email:
-        type: "string"
-      password:
-        type: "string"
-      phone:
-        type: "string"
-      userStatus:
-        type: "integer"
-        format: "int32"
-        description: "User Status"
-    xml:
-      name: "User"
-externalDocs:
-  description: "Find out more about Swagger"
-  url: "http://swagger.io"
+            type: integer
+        filter:
+          type: object
+          properties:
+            width:
+              type: integer
+              nullable: true
+            length:
+              type: integer
+            height:
+              type: integer
+              x-default: ''
+            climatecontrolled:
+              type: integer
+            humiditycontrolled:
+              type: integer
+            outdooraccess:
+              type: integer
+            alarm:
+              type: integer
+            power:
+              type: integer
+            covered:
+              type: integer
+            driveup:
+              type: integer
+            elevator:
+              type: integer
+            car:
+              type: integer
+            rv:
+              type: integer
+            boat:
+              type: integer
+            othervehicle:
+              type: integer
+            doortype:
+              type: integer
+            floor:
+              type: integer
+          example:
+            width: 5
+            length: 5
+    historicaldatarequest:
+      type: object
+      properties:
+        storeid:
+          type: integer
+        masterid:
+          type: integer
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        requestyear:
+          type: integer
+    unitpriceresponse:
+      type: object
+      properties:
+        storeid:
+          type: integer
+        masterid:
+          type: integer
+        spacetype:
+          type: string
+        size:
+          type: string
+        width:
+          type: number
+          format: double
+        length:
+          type: number
+          format: double
+        height:
+          type: number
+          format: double
+        climatecontrolled:
+          type: integer
+        humiditycontrolled:
+          type: integer
+        outdooraccess:
+          type: integer
+        alarm:
+          type: integer
+        power:
+          type: integer
+        covered:
+          type: integer
+        driveup:
+          type: integer
+        elevator:
+          type: integer
+        car:
+          type: integer
+        rv:
+          type: integer
+        boat:
+          type: integer
+        othervehicle:
+          type: integer
+        doortype:
+          type: integer
+        floor:
+          type: integer
+        regularprice:
+          type: number
+          format: double
+        onlineprice:
+          type: number
+          format: double
+        promotionprice:
+          type: number
+          format: double
+        lockerlevel:
+          type: string
+        promo:
+          type: string
+        sourceurl:
+          type: string
+        datecollected:
+          type: string
+          format: date
+        currency:
+          type: string
+          format: currency
+        originalregularprice:
+          type: number
+          format: double
+        originalonlineprice:
+          type: number
+          format: double
+        originalcurrency:
+          type: string
+          format: currency
+        currencyconversionrate:
+          type: number
+          format: double
+    historicaldataresponse:
+      type: array
+      items:
+        type: object
+        properties:
+          storeID:
+            type: integer
+          masterID:
+            type: integer
+          storeName:
+            type: string
+          address:
+            type: string
+          city:
+            type: string
+          state:
+            type: string
+          zipcode:
+            type: string
+          latitude:
+            type: number
+            format: double
+          longitude:
+            type: number
+            format: double
+          availableDays:
+            type: integer
+          requestYear:
+            type: integer
+          availableYears:
+            type: string
+          url:
+            type: string
+          unitType:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                size:
+                  type: string
+                feature:
+                  type: string
+                price:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      date:
+                        type: integer
+                      regular:
+                        type: number
+                        format: double
+                      online:
+                        type: number
+                        format: double
+                      promo:
+                        type: string
+    storeinforequest:
+      type: object
+      properties:
+        storeid:
+          type: integer
+        masterid:
+          type: integer
+    optimizerequest:
+      required:
+        - username
+      type: object
+      properties:
+        username:
+          type: string
+          default: support@aggregateintelligence.com
+    competitorrequest:
+      type: object
+      properties:
+        storeid:
+          minItems: 1
+          type: array
+          items:
+            type: integer
+        masterid:
+          minItems: 1
+          type: array
+          items:
+            type: integer
+        coveragezone:
+          type: integer
+    pricerequest:
+      type: object
+      properties:
+        stores:
+          type: array
+          items:
+            type: object
+            properties:
+              storeid:
+                type: integer
+              masterid:
+                type: integer
+              coveragezone:
+                type: integer
+                format: double
+              competitorstores:
+                type: array
+                items:
+                  type: integer
+              competitormasterids:
+                type: array
+                items:
+                  type: integer
+            example:
+              storeid: 547
+              competitorstores:
+                - 557
+        units:
+          type: array
+          items:
+            type: object
+            properties:
+              width:
+                type: number
+                format: double
+              length:
+                type: number
+                format: double
+              height:
+                type: number
+                format: double
+              climatecontrolled:
+                type: integer
+                nullable: true
+              humiditycontrolled:
+                type: integer
+              outdooraccess:
+                type: integer
+              alarm:
+                type: integer
+              power:
+                type: integer
+              covered:
+                type: integer
+              driveup:
+                type: integer
+              elevator:
+                type: integer
+              car:
+                type: integer
+              rv:
+                type: integer
+              boat:
+                type: integer
+              othervehicle:
+                type: integer
+              doortype:
+                type: integer
+              floor:
+                type: integer
+            example:
+              width: 5
+              length: 5
+    searchresponse:
+      type: object
+      properties:
+        stores:
+          type: array
+          items:
+            type: object
+            properties:
+              storeid:
+                type: integer
+              masterid:
+                type: integer
+              storestatus:
+                type: integer
+              storename:
+                type: string
+              address:
+                type: string
+              city:
+                type: string
+              state:
+                type: string
+              zip:
+                type: string
+              country:
+                type: string
+              phone:
+                type: string
+              latitude:
+                type: number
+                format: double
+              longitude:
+                type: number
+                format: double
+              updateddate:
+                type: string
+                format: date
+    storeinforesponse:
+      type: object
+      properties:
+        storeid:
+          type: integer
+        masterid:
+          type: integer
+        storestatus:
+          type: integer
+        storename:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        yearBuilt:
+          type: string
+        ownedBy:
+          type: string
+        operatedBy:
+          type: string
+        totalSqft:
+          type: integer
+        rentableSqft:
+          type: integer
+        storeType:
+          type: string
+        companyType:
+          type: string
+        classType:
+          type: string
+        collected_Since:
+          type: string
+          format: date
+        collected_Till:
+          type: string
+          format: date
+        units:
+          type: array
+          items:
+            type: object
+            properties:
+              spacetype:
+                type: string
+              size:
+                type: string
+              width:
+                type: number
+                format: double
+              length:
+                type: number
+                format: double
+              height:
+                type: number
+                format: double
+              climatecontrolled:
+                type: integer
+              humiditycontrolled:
+                type: integer
+              outdooraccess:
+                type: integer
+              alarm:
+                type: integer
+              power:
+                type: integer
+              covered:
+                type: integer
+              driveup:
+                type: integer
+              elevator:
+                type: integer
+              car:
+                type: integer
+              rv:
+                type: integer
+              boat:
+                type: integer
+              othervehicle:
+                type: integer
+              doortype:
+                type: integer
+              floor:
+                type: integer
+    competitorresponse:
+      type: object
+      properties:
+        storeid:
+          type: integer
+        masterid:
+          type: integer
+        storestatus:
+          type: integer
+        storename:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        updateddate:
+          type: string
+          format: date
+        competitorstores:
+          type: array
+          items:
+            type: object
+            properties:
+              storeid:
+                type: integer
+              masterid:
+                type: integer
+              storestatus:
+                type: integer
+              storename:
+                type: string
+              address:
+                type: string
+              city:
+                type: string
+              state:
+                type: string
+              zip:
+                type: string
+              country:
+                type: string
+              phone:
+                type: string
+              latitude:
+                type: number
+                format: double
+              longitude:
+                type: number
+                format: double
+              distance:
+                type: number
+                format: double
+              updateddate:
+                type: string
+                format: date
+    markets:
+      type: object
+      properties:
+        userstoreid:
+          type: integer
+        storename:
+          type: string
+        address:
+          type: string
+        address2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        zonecoverage:
+          type: string
+        competitorscount:
+          type: integer
+        createddate:
+          type: string
+          format: date
+        competitors:
+          type: array
+          items:
+            type: object
+            properties:
+              userstoreid:
+                type: integer
+              competitorstoreid:
+                type: integer
+              storename:
+                type: string
+              address:
+                type: string
+              address2:
+                type: string
+              city:
+                type: string
+              state:
+                type: string
+              zip:
+                type: string
+              istracked:
+                type: integer
+              proximity:
+                type: number
+                format: double
+    storepriceresponse:
+      type: object
+      properties:
+        prices:
+          type: array
+          items:
+            type: object
+            properties:
+              subject:
+                type: object
+                properties:
+                  storeid:
+                    type: integer
+                  masterid:
+                    type: integer
+                  storestatus:
+                    type: integer
+                  storename:
+                    type: string
+                  address:
+                    type: string
+                  city:
+                    type: string
+                  state:
+                    type: string
+                  zip:
+                    type: string
+                  country:
+                    type: string
+                  phone:
+                    type: string
+                  latitude:
+                    type: number
+                    format: double
+                  longitude:
+                    type: number
+                    format: double
+                  updateddate:
+                    type: string
+                    format: date
+                  unitprices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        spacetype:
+                          type: string
+                        size:
+                          type: string
+                        width:
+                          type: number
+                          format: double
+                        length:
+                          type: number
+                          format: double
+                        height:
+                          type: number
+                          format: double
+                        climatecontrolled:
+                          type: integer
+                        humiditycontrolled:
+                          type: integer
+                        outdooraccess:
+                          type: integer
+                        alarm:
+                          type: integer
+                        power:
+                          type: integer
+                        covered:
+                          type: integer
+                        driveup:
+                          type: integer
+                        elevator:
+                          type: integer
+                        car:
+                          type: integer
+                        rv:
+                          type: integer
+                        boat:
+                          type: integer
+                        othervehicle:
+                          type: integer
+                        doortype:
+                          type: integer
+                        floor:
+                          type: integer
+                        regularprice:
+                          type: number
+                          format: double
+                        onlineprice:
+                          type: number
+                          format: double
+                        promotionprice:
+                          type: number
+                          format: double
+                        lockerlevel:
+                          type: string
+                        promo:
+                          type: string
+                        sourceurl:
+                          type: string
+                        datecollected:
+                          type: string
+                          format: date
+                        currency:
+                          type: string
+                          format: currency
+                        originalregularprice:
+                          type: number
+                          format: double
+                        originalonlineprice:
+                          type: number
+                          format: double
+                        originalcurrency:
+                          type: string
+                          format: currency
+                        currencyconversionrate:
+                          type: number
+                          format: double
+              competitors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    storeid:
+                      type: integer
+                    masterid:
+                      type: integer
+                    storestatus:
+                      type: integer
+                    storename:
+                      type: string
+                    address:
+                      type: string
+                    city:
+                      type: string
+                    state:
+                      type: string
+                    zip:
+                      type: string
+                    country:
+                      type: string
+                    phone:
+                      type: string
+                    latitude:
+                      type: number
+                      format: double
+                    longitude:
+                      type: number
+                      format: double
+                    updateddate:
+                      type: string
+                      format: date
+                    unitprices:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          spacetype:
+                            type: string
+                          size:
+                            type: string
+                          width:
+                            type: number
+                            format: double
+                          length:
+                            type: number
+                            format: double
+                          height:
+                            type: number
+                            format: double
+                          climatecontrolled:
+                            type: integer
+                          humiditycontrolled:
+                            type: integer
+                          outdooraccess:
+                            type: integer
+                          alarm:
+                            type: integer
+                          power:
+                            type: integer
+                          covered:
+                            type: integer
+                          driveup:
+                            type: integer
+                          elevator:
+                            type: integer
+                          car:
+                            type: integer
+                          rv:
+                            type: integer
+                          boat:
+                            type: integer
+                          othervehicle:
+                            type: integer
+                          doortype:
+                            type: integer
+                          floor:
+                            type: integer
+                          regularprice:
+                            type: number
+                            format: double
+                          onlineprice:
+                            type: number
+                            format: double
+                          promotionprice:
+                            type: number
+                            format: double
+                          promo:
+                            type: string
+                          datecollected:
+                            type: string
+                            format: date
+                          currency:
+                            type: string
+                            format: currency
+                          originalregularprice:
+                            type: number
+                            format: double
+                          originalonlineprice:
+                            type: number
+                            format: double
+                          originalcurrency:
+                            type: string
+                            format: currency
+                          currencyconversionrate:
+                            type: number
+                            format: double
+    newstore:
+      required:
+        - address
+        - city
+        - country
+        - state
+        - storename
+        - zip
+      type: object
+      properties:
+        storename:
+          type: string
+          default: Self Storage
+        address:
+          type: string
+          default: 123, West dr
+        city:
+          type: string
+          default: San Francisco
+        state:
+          type: string
+          default: CA
+        zip:
+          type: string
+          default: '90030'
+        country:
+          type: string
+          default: United States
+        phone:
+          type: string
+          default: 123-456-7890
+    storeremoved:
+      type: object
+      properties:
+        statuscode:
+          type: integer
+        statusmessage:
+          type: string
+    systemerror:
+      type: object
+      properties:
+        message:
+          type: string
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: Use the below /authtoken method get your access token, Once received copy the access_token and then press Authenticate Button in the top right of this block. You will be prompted to pass the access token and click Authenticate Button in the dialog box. Once successfully authenticated you will see green Tick (&#10004;) Mark in the top left of this block. <br /> <br /> This Authentication is valid for 24 hours. Once this is done, you can use all other methods below.
+      flows:
+        password:
+          tokenUrl: https://www.stortrack.com/sandbox/api/authtoken
+          scopes:
+            read: allow read
+            write: allow write
